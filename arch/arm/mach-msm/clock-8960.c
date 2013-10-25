@@ -381,6 +381,9 @@ enum vdd_dig_levels {
 };
 
 #ifdef CONFIG_GPU_VOLTAGE_TABLE
+#define GPU_MIN_VDD           900000
+#define GPU_MAX_VDD          1200000
+
 static int vdd_uv[] = {
   [VDD_DIG_NONE]    =       0,
   [VDD_DIG_LOW]     =  945000,
@@ -407,7 +410,8 @@ void set_gpu_vdd_levels(int uv_tbl[])
   int i;
   for (i = 1; i <= 3; i++)
   {
-    vdd_uv[i] = uv_tbl[i - 1];
+	vdd_uv[i] = min(max(uv_tbl[i - 1],
+			GPU_MIN_VDD), GPU_MAX_VDD);
   }
 }
 #endif
@@ -418,7 +422,6 @@ static int set_vdd_dig_8960(struct clk_vdd_class *vdd_class, int level)
   int ret;
   ret = rpm_vreg_set_voltage(RPM_VREG_ID_PM8921_S3, RPM_VREG_VOTER3,
             vdd_uv[level], vdd_uv[VDD_DIG_HIGH], 1);
-  pr_alert("GPU VOLTAGE - %d - %d", vdd_uv[level], ret);
   return ret;
 #else
 	static const int vdd_uv[] = {
