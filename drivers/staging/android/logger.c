@@ -25,6 +25,7 @@
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/time.h>
+#include <linux/earlysuspend.h>
 #include "logger.h"
 
 #include <asm/ioctls.h>
