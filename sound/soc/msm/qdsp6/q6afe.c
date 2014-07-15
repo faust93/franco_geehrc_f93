@@ -848,7 +848,7 @@ int afe_loopback_cfg(u16 enable, u16 dst_port, u16 src_port, u16 mode)
 	ret = wait_event_timeout(this_afe.wait,
 		(atomic_read(&this_afe.state) == 0),
 			msecs_to_jiffies(TIMEOUT_MS));
-	if (ret < 0) {
+	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
 		ret = -EINVAL;
 		goto fail_cmd;
@@ -926,7 +926,7 @@ int afe_loopback_gain(u16 port_id, u16 volume)
 	ret = wait_event_timeout(this_afe.wait,
 		(atomic_read(&this_afe.state) == 0),
 			msecs_to_jiffies(TIMEOUT_MS));
-	if (ret < 0) {
+	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
 		ret = -EINVAL;
 		goto fail_cmd;
@@ -987,7 +987,7 @@ int afe_apply_gain(u16 port_id, u16 gain)
 	ret = wait_event_timeout(this_afe.wait,
 		(atomic_read(&this_afe.state) == 0),
 			msecs_to_jiffies(TIMEOUT_MS));
-	if (ret < 0) {
+	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
 		ret = -EINVAL;
 		goto fail_cmd;
@@ -1662,7 +1662,7 @@ int afe_sidetone(u16 tx_port_id, u16 rx_port_id, u16 enable, uint16_t gain)
 	ret = wait_event_timeout(this_afe.wait,
 		(atomic_read(&this_afe.state) == 0),
 			msecs_to_jiffies(TIMEOUT_MS));
-	if (ret < 0) {
+	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
 		ret = -EINVAL;
 		goto fail_cmd;
@@ -1793,14 +1793,27 @@ static int __init afe_init(void)
 	atomic_set(&this_afe.status, 0);
 	this_afe.apr = NULL;
 #ifdef CONFIG_DEBUG_FS
+   /*
+          * permission is changed S_IWUGO => S_IWUSR | S_IWGRP
+          * bob.cho@lge.com, 02/07/2012
+   */
+#ifdef CONFIG_LGE_AUDIO
 	debugfs_afelb = debugfs_create_file("afe_loopback",
-	0220, NULL, (void *) "afe_loopback",
+	S_IFREG | S_IWUSR | S_IWGRP, NULL, (void *) "afe_loopback",
 	&afe_debug_fops);
 
 	debugfs_afelb_gain = debugfs_create_file("afe_loopback_gain",
-	0220, NULL, (void *) "afe_loopback_gain",
+	S_IFREG | S_IWUSR | S_IWGRP, NULL, (void *) "afe_loopback_gain",
+	&afe_debug_fops);
+#else
+	debugfs_afelb = debugfs_create_file("afe_loopback",
+	S_IFREG | S_IWUGO, NULL, (void *) "afe_loopback",
 	&afe_debug_fops);
 
+	debugfs_afelb_gain = debugfs_create_file("afe_loopback_gain",
+	S_IFREG | S_IWUGO, NULL, (void *) "afe_loopback_gain",
+	&afe_debug_fops);
+#endif
 
 #endif
 	return 0;
